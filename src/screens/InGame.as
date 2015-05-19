@@ -2,6 +2,7 @@ package screens
 {
 	import flash.geom.Rectangle;
 	import flash.utils.getTimer;
+	import objects.Obstacle;
 		
 	import objects.Cat;
 		
@@ -16,10 +17,12 @@ package screens
 	public class InGame extends starling.display.Sprite
 	{
 		private var cat:Cat;
+		private var obstacle:Obstacle;
+		private var enemigocreado:int = 0;
 		
 		private var timePrevious:Number;
-		private var timeCurrent:Number;
-		private var elapsed:Number;
+		private var timeCurrent:Number = 50;
+		private var elapsed:Number = 0;
 		
 		private var gameState:String;
 		private var playerSpeed:Number;
@@ -54,8 +57,10 @@ package screens
 			cat.x = stage.stageWidth/2;
 			cat.y = stage.stageHeight/2;
 			this.addChild(cat);
+			trace(stage.stageHeight);
+			trace(stage.stageWidth);
 									
-			gameArea = new Rectangle(0, 100, stage.stageWidth, stage.stageHeight - 250);
+			
 		}
 		
 		public function disposeTemporarily():void
@@ -67,19 +72,17 @@ package screens
 		{
 			this.visible = true;
 			
-			this.addEventListener(Event.ENTER_FRAME, checkElapsed);
 			cat.x = -stage.stageWidth;
 			cat.y = stage.stageHeight * 0.5;
 			
 			gameState = "idle";
-			trace("probando probando");
 			playerSpeed = 0;
 			hitObstacle = 0;
-			
+			touchY = stage.stageHeight * 0.5;
 			scoreDistance = 0;
 			obstacleGapCount = 0;
 			
-			this.launchCat();
+			launchCat();
 									
 		}
 		
@@ -87,20 +90,19 @@ package screens
 		
 		private function launchCat():void
 		{
-			this.addEventListener(TouchEvent.TOUCH, onTouch);
-			this.addEventListener(Event.ENTER_FRAME, onGameTick);
+			stage.addEventListener(TouchEvent.TOUCH, onTouch);
+			stage.addEventListener(Event.ENTER_FRAME, onGameTick);
 		}
 		
 		private function onTouch(event:TouchEvent):void
 		{
 			touch = event.getTouch(stage);
-			
-			touchX = touch.globalX;
-			touchY = touch.globalY;
+			if (touch != null) touchY = touch.globalY;
 		}
 		
 		private function onGameTick(event:Event):void
 		{
+			
 			switch(gameState)
 			{
 				case "idle":
@@ -116,34 +118,60 @@ package screens
 					else
 					{
 						gameState = "flying";
+						
 					}
 					break;
 				case "flying":
-					
+					elapsed++;
+
 					if (hitObstacle <= 0)
 					{
-						cat.y -= (cat.y - touchY) * 0.1;
+						cat.y -= (cat.y - touchY) * 0.05;
 						
-						if (-(cat.y - touchY) < 150 && -(cat.y - touchY) > -150)
+						if (-(cat.y - touchY) < cat.height/2 && -(cat.y - touchY) > -cat.height/2)
 						{
 							cat.rotation = deg2rad(-(cat.y - touchY) * 0.2);
 						}
 						
-						if (cat.y > gameArea.bottom - cat.height * 0.5)
+						if (cat.y > 800 - cat.height * 0.5)
 						{
-							cat.y = gameArea.bottom - cat.height * 0.5;
+							cat.y = 800 - cat.height * 0.5;
 							cat.rotation = deg2rad(0);
 						}
-						if (cat.y < gameArea.top + cat.height * 0.5)
+						if (cat.y < cat.height * 0.5)
 						{
-							cat.y = gameArea.top + cat.height * 0.5;
+							cat.y = cat.height * 0.5;
 							cat.rotation = deg2rad(0);
 						}
+						if (elapsed == timeCurrent)
+						{
+							obstacle = new Obstacle(1);
+							obstacle.x = stage.stageWidth + obstacle.width*2;
+			                obstacle.y = Math.random() * 800;
+							if (obstacle.y > 800 - obstacle.height * 0.5) obstacle.y = 800 - obstacle.height*2;
+						    if (obstacle.y < obstacle.height * 0.5) obstacle.y = obstacle.height*2;
+			                this.addChild(obstacle);
+							enemigocreado++;
+							elapsed = 0;
+							trace(enemigocreado);
+						}
+						if (enemigocreado >= 1)
+						{
+							if (obstacle.x < -50)
+							{
+								this.removeChild(obstacle);
+								trace("eh");
+								enemigocreado--;
+							}
+							
+						}
+						
 					}
 					else
 					{
 						hitObstacle--;
 						cameraShake();
+						trace("auch");
 					}
 					
 					playerSpeed -= (playerSpeed - MIN_SPEED) * 0.01;
@@ -152,6 +180,7 @@ package screens
 					
 					break;
 				case "over":
+					trace("eh D:");
 					break;
 			}
 		}
@@ -168,13 +197,6 @@ package screens
 				this.x = 0;
 				this.y = 0;
 			}
-		}
-						
-		private function checkElapsed(event:Event):void
-		{
-			timePrevious = timeCurrent;
-			timeCurrent = getTimer();
-			elapsed = (timeCurrent - timePrevious) * 0.001;
 		}
 	}
 }

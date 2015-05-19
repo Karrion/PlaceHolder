@@ -21,11 +21,11 @@ package
 		
 		private function onAddedToStage(event:Event):void
 		{
-			trace("ESTA ES LA ALARMA TODO VA COMO DIOS MANDA");
-			
+				
 			this.addEventListener(events.NavigationEvent.CHANGE_SCREEN, onChangeScreen);
 			
 			screenIngame = new InGame();
+			this.addChild(screenIngame);
 			screenIngame.disposeTemporarily();
 			
 			screenWelcome = new Welcome();
